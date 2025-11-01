@@ -61,6 +61,17 @@ Keys can be set in `.env` (auto-read) or injected as environment variables when 
    ```
 3. Optional: attach a scheduler/Cloud Tasks job to hit `scripts/bootstrap_data.py` in a separate Cloud Run Job for cache warming.
 
+### Automated deployment via GitHub Actions
+
+The workflow in `.github/workflows/deploy-cloud-run.yml` builds with Cloud Build and deploys to Cloud Run on every push to `main` (plus manual runs via **Run workflow**).
+
+Configure repository secrets and variables:
+
+- **Secrets**: `GCP_SERVICE_ACCOUNT_KEY` (JSON for a service account with `Cloud Run Admin`, `Cloud Build Editor`, `Artifact Registry Writer`), `FRED_API_KEY`, `TWELVE_DATA_API_KEY`.
+- **Variables**: `GCP_PROJECT_ID`, `GCP_REGION`, `CLOUD_RUN_SERVICE`, `IMAGE_NAME`.
+
+The workflow authenticates using the key, builds `gcr.io/$GCP_PROJECT_ID/$IMAGE_NAME`, and deploys the specified service with the required environment variables.
+
 ## Extending the Scaffold
 
 - Add new sources in `golden_compass/data/sources.py` and implement corresponding client in `golden_compass/services/`.

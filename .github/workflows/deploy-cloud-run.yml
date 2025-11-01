@@ -1,0 +1,52 @@
+name: Deploy Golden Compass to Cloud Run
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  SERVICE: ${{ vars.CLOUD_RUN_SERVICE }}
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up gcloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure gcloud defaults
+        run: |
+          gcloud config set project "${{ env.PROJECT_ID }}"
+          gcloud config set run/region "${{ env.REGION }}"
+          gcloud config set run/platform managed
+
+      - name: Build container image with Cloud Build
+        run: |
+          gcloud builds submit --tag "gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}"
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy "${{ env.SERVICE }}" \
+            --image "gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}" \
+            --region "${{ env.REGION }}" \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-env-vars "FRED_API_KEY=${{ secrets.FRED_API_KEY }},TWELVE_DATA_API_KEY=${{ secrets.TWELVE_DATA_API_KEY }}"
