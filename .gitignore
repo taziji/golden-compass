@@ -1,0 +1,20 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+
+# Environments
+.venv/
+.env
+
+# Data caches
+/data/
+
+# Streamlit
+.streamlit/logs/
+
+# macOS
+.DS_Store
